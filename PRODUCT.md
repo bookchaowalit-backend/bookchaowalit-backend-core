@@ -12,37 +12,15 @@ system.
 
 ## Runnable path
 
-See `README.md` for install and run instructions when present.
+`python3 scripts/check.py` and `python3 -m unittest discover -s tests` (Python
+3.11+, no dependencies). See `README.md`.
+
+## Shared contracts
+
+- `contracts/book-platform.contract.v1.schema.json`: canonical schema for the
+  Book Platform repository contracts, vendored by each platform repository.
 
 ## Limits
 
-- Not claimed as production-ready unless README and tests prove it.
-- Mobile smoke / emulator acceptance is separate and toolchain-dependent.
-
-## Source README excerpt
-
-```
-# bookchaowalit-backend-core
-
-Starter repository for the `bookchaowalit-backend` organization.
-
-## Purpose
-
-This repository is an intentionally thin baseline for shared backend
-conventions, API contracts, services, and workers. It contains no product
-features yet.
-
-## Repository boundary
-
-- **Owner:** `bookchaowalit-backend`
-- **Lifecycle:** shared backend foundation
-- **Default branch:** `main`
-- **Status:** starter / skeleton
-
-## CI
-
-GitHub Actions runs the starter contract check on pushes and pull requests.
-The workflow verifies that the required baseline files remain present.
-
-## Local dev
-```
+- No runtime, service or worker exists yet; nothing here is production-ready.
+- Schema changes must be copied to every platform repository that vendors them.
