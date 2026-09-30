@@ -9,8 +9,17 @@ repositories.
 
 Each platform repository vendors an identical copy at
 `schema/book-platform.contract.v1.schema.json` and validates its
-`contract.json` offline with `scripts/check.py`. Change the schema here first,
-then copy it to each platform repository in the same change set.
+`contract.json` offline with `scripts/check.py`. The schema digest is pinned in
+[`book-platform.contract.v1.schema.json.sha256`](book-platform.contract.v1.schema.json.sha256)
+(`sha256sum` format); platform repositories vendor the same pin file and fail
+CI (`scripts/check_schema_pin.py`) when their copy drifts from it.
+
+To change the schema: edit it here, regenerate the pin with
+`(cd contracts && sha256sum book-platform.contract.v1.schema.json > book-platform.contract.v1.schema.json.sha256)`
+(`scripts/check.py` fails until you do), then copy both files into every
+platform repository in the same change set. With sibling checkouts,
+`python3 scripts/check_platform_sync.py --workspace ..` reports any platform
+whose schema or pin differs from this canonical copy.
 
 The platform validators implement a JSON Schema subset (`type`, `const`,
 `enum`, `pattern`, `minLength`, `minItems`, `uniqueItems`, `items`, `required`,

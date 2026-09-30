@@ -21,7 +21,8 @@ Platform repository contract schema in [`contracts/`](contracts/README.md).
 GitHub Actions runs `python3 scripts/check.py` and the unit tests on pushes
 and pull requests. The check verifies that the baseline files remain present,
 that shared schemas use only the JSON Schema subset the platform repositories
-enforce, and that `contracts/examples/valid` passes while
+enforce, that `contracts/book-platform.contract.v1.schema.json.sha256` pins
+the current schema digest, and that `contracts/examples/valid` passes while
 `contracts/examples/invalid` fails.
 
 ## Local development
@@ -31,6 +32,8 @@ There is no runtime or third-party dependency. With Python 3.11+:
 ```bash
 python3 scripts/check.py
 python3 -m unittest discover -s tests -v
+# with platform repositories checked out next to this one:
+python3 scripts/check_platform_sync.py --workspace ..
 ```
 
 Add implementation only when a concrete backend product or shared contract is

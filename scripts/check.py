@@ -10,6 +10,7 @@ fail (``invalid/``) as expected. No network access and no third-party packages.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import sys
@@ -19,6 +20,9 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 BASELINE_FILES = ("README.md", "LICENSE", "PRODUCT.md", ".github/workflows/ci.yml")
 PLATFORM_SCHEMA = "contracts/book-platform.contract.v1.schema.json"
+# Platform repositories vendor this pin next to their schema copy and fail CI
+# when their copy stops matching it (scripts/check_schema_pin.py there).
+PLATFORM_SCHEMA_PIN = f"{PLATFORM_SCHEMA}.sha256"
 SUPPORTED_KEYWORDS = frozenset(
     {
         "$schema",
@@ -139,8 +143,32 @@ def unsupported_keywords(schema: Any, path: str = "$") -> list[str]:
     return problems
 
 
+def pin_errors(root: Path) -> list[str]:
+    """Return errors when the schema pin file is missing, malformed or stale."""
+
+    schema_path = root / PLATFORM_SCHEMA
+    pin_path = root / PLATFORM_SCHEMA_PIN
+    if not pin_path.is_file():
+        return [f"{PLATFORM_SCHEMA_PIN} is missing"]
+    if not schema_path.is_file():
+        return []
+    expected_name = Path(PLATFORM_SCHEMA).name
+    lines = [line for line in pin_path.read_text(encoding="utf-8").splitlines() if line.strip()]
+    match = re.fullmatch(r"([0-9a-f]{64})\s+\*?(\S+)\s*", lines[0]) if len(lines) == 1 else None
+    if match is None or Path(match.group(2)).name != expected_name:
+        return [f"{PLATFORM_SCHEMA_PIN} must contain one '<sha256>  {expected_name}' line"]
+    actual = hashlib.sha256(schema_path.read_bytes()).hexdigest()
+    if match.group(1) != actual:
+        return [
+            f"{PLATFORM_SCHEMA_PIN} is stale: schema sha256 is {actual}; update the pin and "
+            "re-vendor both files into every platform repository"
+        ]
+    return []
+
+
 def validate(root: Path = ROOT) -> list[str]:
     errors = [f"{name} is missing or empty" for name in BASELINE_FILES if not (root / name).is_file() or not (root / name).stat().st_size]
+    errors.extend(pin_errors(root))
     schema_path = root / PLATFORM_SCHEMA
     try:
         schema = json.loads(schema_path.read_text(encoding="utf-8"))
