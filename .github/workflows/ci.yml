@@ -2,24 +2,31 @@ name: CI
 
 on:
   push:
-    branches: [main]
   pull_request:
-    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   starter-contract:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Verify starter contract
-        shell: bash
-        run: |
-          set -euo pipefail
-          test -s README.md
-          test -s LICENSE
-          test -s .github/workflows/ci.yml
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Verify baseline and shared contract schemas
+        run: python3 scripts/check.py
+
+      - name: Run tests
+        run: python3 -m unittest discover -s tests -v
